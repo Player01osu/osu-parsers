@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 		else {
 			eprintf("ERROR: Unknown flag: %s\n", arg);
 			eprintf(help);
-			exit(1);
+			goto error_1;
 		}
 	}
 
