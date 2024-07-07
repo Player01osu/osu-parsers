@@ -329,7 +329,12 @@ int osrp_parse_osr(StreamReader *reader, OsuReplay *out)
 		eprintf("Could not read beatmap hash");
 		return -1;
 	}
-	assert(tmp_str.len == sizeof(out->beatmap_hash));
+	if (tmp_str.len != sizeof(out->beatmap_hash)) {
+		eprintf("Unexpected beatmap hash length; possibly corrupted file");
+		free(tmp_str.items);
+		return -1;
+	}
+
 	/* TODO: Try to avoid copies */
 	memcpy(out->beatmap_hash, tmp_str.items, sizeof(out->beatmap_hash));
 	free(tmp_str.items);
@@ -348,7 +353,11 @@ int osrp_parse_osr(StreamReader *reader, OsuReplay *out)
 		eprintf("Could not read md5hash");
 		goto error_1;
 	}
-	assert(tmp_str.len == sizeof(out->md5hash));
+	if (tmp_str.len != sizeof(out->md5hash)) {
+		eprintf("Unexpected md5hash length; possibly corrupted file");
+		free(tmp_str.items);
+		return -1;
+	}
 	/* TODO: Try to avoid copies */
 	memcpy(out->md5hash, tmp_str.items, sizeof(out->md5hash));
 	free(tmp_str.items);
