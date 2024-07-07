@@ -1,3 +1,7 @@
+/*
+ * Example program using the osr parser.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
