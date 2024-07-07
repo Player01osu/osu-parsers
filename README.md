@@ -22,6 +22,7 @@ An example of building an executable is in the `Makefile`
 - https://github.com/ppy/osu
 - https://github.com/dotnet/runtime
 - https://github.com/lloyd/easylzma
+- https://github.com/nothings/stb/blob/master/stb_sprintf.h
 
 ## TODO
 
