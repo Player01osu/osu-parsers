@@ -1,0 +1,5 @@
+*.o
+libosr_parser.a
+libosr_parser.so
+osr_tools
+easylzma-master/build

@@ -1,0 +1,62 @@
+#ifndef ELZMA_EXPOSE_H
+#define ELZMA_EXPOSE_H
+
+/** a structure which may be cast and passed into Igor's allocate
+ *  routines */
+struct elzma_alloc_struct {
+    void *(*Alloc)(void *p, size_t size);
+    void (*Free)(void *p, void *address); /* address can be 0 */
+
+    elzma_malloc clientMallocFunc;
+    void * clientMallocContext;
+
+    elzma_free clientFreeFunc;
+    void * clientFreeContext;
+};
+
+/** a structure which encapsulates information about the particular
+ *  file header and footer in use (lzip vs lzma vs (eventually) xz.
+ *  The intention of this structure is to simplify compression and
+ *  decompression logic by abstracting the file format details a bit.  */
+struct elzma_format_handler
+{
+    unsigned int header_size;
+    void (*init_header)(const void *hdr);
+    int (*parse_header)(const void *hdrBuf, void *hdr);
+    int (*serialize_header)(void *hdrBuf, const void *hdr);
+
+    unsigned int footer_size;
+    int (*serialize_footer)(void *ftr, void *ftrBuf);
+    int (*parse_footer)(const void *ftrBuf, void *ftr);
+};
+
+typedef struct _CLzmaEncProps
+{
+  int level;       /*  0 <= level <= 9 */
+  uint32_t dictSize; /* (1 << 12) <= dictSize <= (1 << 27) for 32-bit version
+                      (1 << 12) <= dictSize <= (1 << 30) for 64-bit version
+                       default = (1 << 24) */
+  int lc;          /* 0 <= lc <= 8, default = 3 */
+  int lp;          /* 0 <= lp <= 4, default = 0 */
+  int pb;          /* 0 <= pb <= 4, default = 2 */
+  int algo;        /* 0 - fast, 1 - normal, default = 1 */
+  int fb;          /* 5 <= fb <= 273, default = 32 */
+  int btMode;      /* 0 - hashChain Mode, 1 - binTree mode - normal, default = 1 */
+  int numHashBytes; /* 2, 3 or 4, default = 4 */
+  uint32_t mc;        /* 1 <= mc <= (1 << 30), default = 32 */
+  unsigned writeEndMark;  /* 0 - do not write EOPM, 1 - write EOPM, default = 0 */
+  int numThreads;  /* 1 or 2, default = 2 */
+} CLzmaEncProps;
+
+typedef void *CLzmaEncHandle;
+
+struct elzma_compress_handle_exposed {
+    CLzmaEncProps props;
+    CLzmaEncHandle encHand;
+    unsigned long long uncompressedSize;
+    elzma_file_format format;
+    struct elzma_alloc_struct allocStruct;
+    struct elzma_format_handler formatHandler;
+};
+
+#endif
