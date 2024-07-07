@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (mods_opt) printf("mods: %X\n", replay.mod_bitfield);
+	if (mods_opt) printf("mods: 0x%X\n", replay.mod_bitfield);
 	if (username_opt) {
 		fputs("username: ", stdout);
 		fwrite(replay.username.items, 1, replay.username.len, stdout);
