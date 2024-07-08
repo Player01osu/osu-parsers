@@ -1,7 +1,7 @@
 AR := ar
 CC := gcc
 CFLAGS := -Wall -Wextra -Wpedantic -Wno-unused-function -std=c99 -ggdb
-UTILS := string_builder.c string_builder.h xutils.h xutils.c qarray.h
+UTILS := string_builder.c string_builder.h xutils.h qarray.h
 EASYLZMA := easylzma-master/build/easylzma-0.0.8/lib/libeasylzma_s.a
 
 all: osr_tools static
@@ -11,18 +11,15 @@ static: libosr_parser.a
 # XXX: Currently does not link correctly
 shared: libosr_parser.so
 
-libosr_parser.a: osr_parser.o binary_parser.o string_builder.o xutils.o $(EASYLZMA)
+libosr_parser.a: osr_parser.o binary_parser.o string_builder.o $(EASYLZMA)
 	$(AR) x $(EASYLZMA)
 	$(AR) rc libosr_parser.a *.o
 
-libosr_parser.so: osr_parser.o binary_parser.o string_builder.o xutils.o $(EASYLZMA)
+libosr_parser.so: osr_parser.o binary_parser.o string_builder.o $(EASYLZMA)
 	$(AR) x $(EASYLZMA)
-	$(CC) -shared -o libosr_parser.so osr_parser.o binary_parser.o string_builder.o xutils.o -Wl,--whole-archive easylzma-master/src/lib/libeasylzma_s.a -Wl,--no-whole-archive
+	$(CC) -shared -o libosr_parser.so osr_parser.o binary_parser.o string_builder.o -Wl,--whole-archive easylzma-master/src/lib/libeasylzma_s.a -Wl,--no-whole-archive
 
-xutils.o: xutils.c xutils.h
-	$(CC) -fPIC -c -o xutils.o xutils.c $(CFLAGS)
-
-string_builder.o: string_builder.c string_builder.h xutils.c xutils.h
+string_builder.o: string_builder.c string_builder.h xutils.h
 	$(CC) -fPIC -c -o string_builder.o string_builder.c $(CFLAGS)
 
 binary_parser.o: binary_parser.c binary_parser.h $(UTILS)
