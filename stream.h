@@ -6,7 +6,7 @@ typedef struct StreamReader {
 
 	/* `read_n` will request n bytes to be filled into `buf`
 	 *
-	 * Return < 0 for error, 1 for EOF
+	 * Return < 0 for error, 1 for EOS
 	 *
 	 * int read_n(void *ctx, size_t num_bytes, void *buf);
 	 */
