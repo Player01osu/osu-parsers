@@ -29,4 +29,5 @@ An example of building an executable is in the `Makefile`
 - [ ] Shared library
 - [ ] Document API
 - [ ] Parse .osu
-- [ ] Prefix symbols
+- [ ] Write tests
+- [X] Prefix symbols
