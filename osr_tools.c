@@ -19,7 +19,9 @@ static int read_file(void *ctx, size_t size, void *buf)
 	if (fread(buf, 1, size, f) == size) {
 		return 0;
 	} else {
-		return -1;
+		if (!feof(f)) return 1;
+		else return -1;
+
 	}
 }
 
