@@ -19,7 +19,7 @@ static int read_file(void *ctx, size_t size, void *buf)
 	if (fread(buf, 1, size, f) == size) {
 		return 0;
 	} else {
-		return 1;
+		return -1;
 	}
 }
 
@@ -29,7 +29,7 @@ static int write_file(void *ctx, size_t size, const void *buf)
 	if (fwrite(buf, 1, size, f) == size) {
 		return 0;
 	} else {
-		return 1;
+		return -1;
 	}
 }
 
