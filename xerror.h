@@ -21,14 +21,14 @@
 #ifndef XERROR_OVERFLOW_CB
 #include <stdio.h>
 
-#define panic(...)                                             \
+#define xerror_panic(...)                                      \
 	do {                                                   \
 		fprintf(stderr, "%s:%d:", __FILE__, __LINE__); \
 		fprintf(stderr, __VA_ARGS__);                  \
 		abort();                                       \
 	} while (0)
 
-#define XERROR_OVERFLOW_CB panic
+#define XERROR_OVERFLOW_CB xerror_panic
 #endif
 
 #ifndef XERROR_VSNPRINTF
