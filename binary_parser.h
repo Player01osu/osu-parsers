@@ -17,9 +17,9 @@ enum {
 	EBIN_PARSER_W_BAD_WRITE,
 };
 
-/* XXX: prefix functions to avoid symbol collisions */
+const char *binp_error_msg(void);
 
-char *binp_error_str(void);
+size_t binp_error_msg_len(void);
 
 int binp_read_uleb128(StreamReader *reader, int *output);
 

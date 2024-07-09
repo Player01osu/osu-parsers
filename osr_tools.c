@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 	char *fname = argv[1];
 	FILE *f = fopen(fname, "rb");
 	if (!f) {
-		eprintf("ERROR: Failed to open file: %s\n", fname);
+		eprintf("ERROR:Failed to open file:%s\n", fname);
 		exit(1);
 	}
 
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 		else if (strcmp(arg, "--score") == 0) score_opt = true;
 		else if (strcmp(arg, "--max-combo") == 0) max_combo_opt = true;
 		else {
-			eprintf("ERROR: Unknown flag: %s\n", arg);
+			eprintf("ERROR:Unknown flag:%s\n", arg);
 			eprintf(help);
 			goto error_1;
 		}
@@ -107,14 +107,14 @@ int main(int argc, char **argv)
 	};
 	OsuReplay replay = {0};
 	if (osrp_parse_osr(&reader, &replay) < 0) {
-		eprintf("ERROR: Could not parse osr: %s\n", fname);
+		eprintf("ERROR:Could not parse osr:%s:%s\n", fname, osrp_error_msg());
 		ret = 1;
 		goto error_1;
 	}
 
 	if (csv_opt) {
 		if (osrp_replay_frame_csv(&writer, &replay, true) < 0) {
-			eprintf("ERROR: Could not put csv\n");
+			eprintf("ERROR:Could not put csv:%s\n", osrp_error_msg());
 			goto error_2;
 		}
 	}

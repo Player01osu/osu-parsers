@@ -1,7 +1,7 @@
 AR := ar
 CC := gcc
 CFLAGS := -Wall -Wextra -Wpedantic -Wno-unused-function -std=c99 -ggdb
-UTILS := string_builder.c string_builder.h xutils.h qarray.h
+UTILS := string_builder.c string_builder.h xutils.h qarray.h xerror.h
 EASYLZMA := easylzma-master/build/easylzma-0.0.8/lib/libeasylzma_s.a
 
 all: osr_tools static

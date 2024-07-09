@@ -72,6 +72,10 @@ typedef struct OsuReplay {
 	int64_t online_id;
 } OsuReplay;
 
+const char *osrp_error_msg(void);
+
+size_t osrp_error_msg_len(void);
+
 int osrp_parse_replay_frames(const ByteSlice *src, struct ReplayFrames *out);
 
 int osrp_parse_osr(StreamReader *reader, OsuReplay *out);
