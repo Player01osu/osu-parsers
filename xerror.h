@@ -7,9 +7,10 @@
  * ```
  */
 
-
 #ifndef XERROR_H
 #define XERROR_H
+
+#include <stdarg.h>
 
 #ifndef XERROR_ASSERT
 #include <assert.h>
