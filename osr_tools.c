@@ -108,15 +108,15 @@ int main(int argc, char **argv)
 		.write_n = write_file,
 	};
 	OsuReplay replay = {0};
-	if (osrp_parse_osr(&reader, &replay) < 0) {
-		eprintf("ERROR:Could not parse osr:%s:%s\n", fname, osrp_error_msg());
+	if ((ret = osrp_parse_osr(&reader, &replay)) < 0) {
+		eprintf("ERROR:Could not parse osr:%s:%s\n", fname, osrp_error_msg(ret));
 		ret = 1;
 		goto error_1;
 	}
 
 	if (csv_opt) {
-		if (osrp_replay_frame_csv(&writer, &replay, true) < 0) {
-			eprintf("ERROR:Could not put csv:%s\n", osrp_error_msg());
+		if ((ret = osrp_replay_frame_csv(&writer, &replay, true)) < 0) {
+			eprintf("ERROR:Could not put csv:%s\n", osrp_error_msg(ret));
 			goto error_2;
 		}
 	}

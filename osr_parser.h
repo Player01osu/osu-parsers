@@ -8,8 +8,8 @@
 #include "stream.h"
 
 enum {
-	EOSR_PARSER_FLOAT_PARSE = 1,
-	EOSR_ENCODE_LZMA_FRAME_COMPRESS,
+	EOSR_DAMAGED_FILE = 1, /* Headers valid; bad data */
+	EOSR_UNKNOWN_FILE,     /* Headers invalid */
 };
 
 enum {
@@ -40,7 +40,7 @@ typedef struct ReplayFrame {
 typedef struct OsuReplay {
 	unsigned char mode;
 	int32_t version;
-	/* TODO: Both of these are stored as strings in the format, but space
+	/* TODO: Both hashes are stored as byte arrays in the format, but space
 	 * can be saved by turning these into raw bytes (ie: u64)
 	 */
 	char beatmap_hash[32];
@@ -72,9 +72,7 @@ typedef struct OsuReplay {
 	int64_t online_id;
 } OsuReplay;
 
-const char *osrp_error_msg(void);
-
-size_t osrp_error_msg_len(void);
+const char *osrp_error_msg(int error_code);
 
 int osrp_parse_replay_frames(const ByteSlice *src, struct ReplayFrames *out);
 

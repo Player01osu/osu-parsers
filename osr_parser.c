@@ -22,18 +22,18 @@
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
 
-#define XERROR_OVERFLOW_CB panic
-#define XERROR_SNPRINTF stbsp_snprintf
-#include "xerror.h"
-
-const char *osrp_error_msg(void)
+const char *osrp_error_msg(int error_code)
 {
-	return xerror_str;
-}
-
-size_t osrp_error_msg_len(void)
-{
-	return xerror_str_len;
+	switch (-error_code) {
+	case EOSR_DAMAGED_FILE:
+		return "Potentially damaged or corrupt file";
+		break;
+	case EOSR_UNKNOWN_FILE:
+		return "Unknown file";
+		break;
+	default:
+		return "Bad osr error code";
+	}
 }
 
 static size_t compress_write(void *ctx, const void *buf, size_t size)
@@ -189,8 +189,7 @@ int osrp_parse_replay_frames(const ByteSlice *src, struct ReplayFrames *out)
 		endptr = &src->items[field_locations[0]];
 		float offset = (float) strtod(&src->items[cursor], &endptr);
 		if (!endptr) {
-			xerror_sput("Could not parse float");
-			ret = -EOSR_PARSER_FLOAT_PARSE;
+			ret = -EOSR_DAMAGED_FILE;
 			goto error_1;
 		}
 		current_time += offset;
@@ -201,8 +200,7 @@ int osrp_parse_replay_frames(const ByteSlice *src, struct ReplayFrames *out)
 		endptr = &src->items[field_locations[1]];
 		frame.mouse_x = (float) strtod(&src->items[cursor], &endptr);
 		if (!endptr) {
-			xerror_sput("Could not parse float");
-			ret = -EOSR_PARSER_FLOAT_PARSE;
+			ret = -EOSR_DAMAGED_FILE;
 			goto error_1;
 		}
 
@@ -210,8 +208,7 @@ int osrp_parse_replay_frames(const ByteSlice *src, struct ReplayFrames *out)
 		endptr = &src->items[field_locations[2]];
 		frame.mouse_y = (float) strtod(&src->items[cursor], &endptr);
 		if (!endptr) {
-			xerror_sput("Could not parse float");
-			ret = -EOSR_PARSER_FLOAT_PARSE;
+			ret = -EOSR_DAMAGED_FILE;
 			goto error_1;
 		}
 
@@ -269,7 +266,6 @@ int osrp_parse_hp_graph(Str hp_str, HPGraph *out)
 				goto error_1;
 			}
 			if (fb_idx >= sizeof(field_boundaries)) {
-				xerror_sput("Too many fields");
 				ret = -1;
 				goto error_1;
 			}
@@ -279,7 +275,6 @@ int osrp_parse_hp_graph(Str hp_str, HPGraph *out)
 			} else if (hp_str.items[tmp] == ',') {
 				field_boundaries[fb_idx] = tmp - 1;
 				if (fb_idx != 1) {
-					xerror_sput("Incorrect number of fields");
 					ret = -1;
 					goto error_1;
 				}
@@ -294,7 +289,6 @@ int osrp_parse_hp_graph(Str hp_str, HPGraph *out)
 		endptr = &hp_str.items[field_boundaries[0]];
 		point.time = (int32_t) strtoimax(nptr, &endptr, 10);
 		if (!endptr) {
-			xerror_sput("Could not parse time field");
 			ret = -1;
 			goto error_1;
 		}
@@ -304,8 +298,7 @@ int osrp_parse_hp_graph(Str hp_str, HPGraph *out)
 		endptr = &hp_str.items[field_boundaries[1]];
 		point.value = (float) strtod(nptr, &endptr);
 		if (!endptr) {
-			xerror_sput("Could not parse float");
-			ret = -EOSR_PARSER_FLOAT_PARSE;
+			ret = -EOSR_DAMAGED_FILE;
 			goto error_1;
 		}
 		cursor = field_boundaries[1] + 2;
@@ -326,25 +319,19 @@ int osrp_parse_osr(StreamReader *reader, OsuReplay *out)
 {
 	int ret = 0;
 	if (reader->read_n(reader->ctx, 1, &out->mode) != 0) {
-		xerror_sput("Read failed at mode byte");
 		return -1;
 	}
 
 	if (binp_read_i32(reader, &out->version) < 0) {
-		xerror_put(binp_error_msg(), binp_error_msg_len());
-		xerror_scat(":Read failed at version");
 		return -1;
 	}
 
 	Str tmp_str = {0};
 	ret = binp_read_str(reader, &tmp_str);
 	if (ret < 0) {
-		xerror_put(binp_error_msg(), binp_error_msg_len());
-		xerror_scat(":Could not read beatmap hash");
 		return -1;
 	}
 	if (tmp_str.len != sizeof(out->beatmap_hash)) {
-		xerror_sput("Unexpected beatmap hash length; possibly corrupted file");
 		free(tmp_str.items);
 		return -1;
 	}
@@ -357,18 +344,13 @@ int osrp_parse_osr(StreamReader *reader, OsuReplay *out)
 
 	ret = binp_read_str(reader, &out->username);
 	if (ret < 0) {
-		xerror_put(binp_error_msg(), binp_error_msg_len());
-		xerror_scat(":Could not read username");
 		return -1;
 	}
 	ret = binp_read_str(reader, &tmp_str);
 	if (ret < 0) {
-		xerror_put(binp_error_msg(), binp_error_msg_len());
-		xerror_scat(":Could not read md5hash");
 		goto error_1;
 	}
 	if (tmp_str.len != sizeof(out->md5hash)) {
-		xerror_sput("Unexpected md5hash length; possibly corrupted file");
 		free(tmp_str.items);
 		return -1;
 	}
@@ -400,14 +382,10 @@ int osrp_parse_osr(StreamReader *reader, OsuReplay *out)
 
 	ret = binp_read_str(reader, &tmp_str);
 	if (ret < 0) {
-		xerror_put(binp_error_msg(), binp_error_msg_len());
-		xerror_scat(":Could not to read hp graph str\n");
 		goto error_1;
 	}
 	ret = osrp_parse_hp_graph(tmp_str, &out->hp_graph);
 	if (ret < 0) {
-		xerror_put(binp_error_msg(), binp_error_msg_len());
-		xerror_scat(":Could not parse hp graph");
 		free(tmp_str.items);
 		goto error_1;
 	}
@@ -427,11 +405,8 @@ int osrp_parse_osr(StreamReader *reader, OsuReplay *out)
 		int result = binp_read_byte_array(reader, &compressed_replay);
 		if (result < 0) {
 			ret = result;
-			xerror_put(binp_error_msg(), binp_error_msg_len());
-			xerror_scat(":Could not read compressed replay");
 			goto error_2;
 		} else if (result == 1) {
-			xerror_sput("NULL byte array is used for non-legacy replays, which is not yet implemented");
 			goto error_2;
 		}
 		ByteArray byte_array = {0};
@@ -448,7 +423,6 @@ int osrp_parse_osr(StreamReader *reader, OsuReplay *out)
 		if (result != 0) {
 			/* TODO: Decompress error reason */
 			string_builder_free(&byte_array);
-			xerror_fmt("Could not decompress lzma stream: %d\n", result);
 			elzma_decompress_free(&hand);
 			ret = -1;
 			goto error_3;
@@ -458,8 +432,6 @@ int osrp_parse_osr(StreamReader *reader, OsuReplay *out)
 		ByteSlice barray = string_builder_build(&byte_array);
 		if (osrp_parse_replay_frames(&barray, &out->frames) < 0) {
 			free(barray.items);
-			xerror_put(binp_error_msg(), binp_error_msg_len());
-			xerror_scat(":Could not parse replay frames");
 			ret = -1;
 			goto error_3;
 		}
@@ -469,21 +441,16 @@ int osrp_parse_osr(StreamReader *reader, OsuReplay *out)
 	if (out->version >= 20140721) {
 		ret = binp_read_i64(reader, &out->online_id);
 		if (ret < 0) {
-			xerror_put(binp_error_msg(), binp_error_msg_len());
-			xerror_scat(":Could not read online id");
 			goto error_3;
 		}
 	} else if (out->version >= 20121008) {
 		int32_t i;
 		ret = binp_read_i32(reader, &i);
 		if (ret < 0) {
-			xerror_put(binp_error_msg(), binp_error_msg_len());
-			xerror_scat(":Could not read online id");
 			goto error_3;
 		}
 		out->online_id = (int64_t) i;
 	} else {
-		xerror_sput("Unimplemented non-legacy online id");
 		goto error_3;
 	}
 
@@ -508,13 +475,10 @@ int osrp_write_osr(StreamWriter *writer, const OsuReplay *in)
 {
 	int ret = 0;
 	if (writer->write_n(writer->ctx, 1, &in->mode) < 0) {
-		xerror_sput("Could not write mode byte");
 		return -1;
 	}
 
 	if (binp_write_i32(writer, in->version) < 0) {
-		xerror_put(binp_error_msg(), binp_error_msg_len());
-		xerror_scat(":Could not write version");
 		return -1;
 	}
 
@@ -523,13 +487,10 @@ int osrp_write_osr(StreamWriter *writer, const OsuReplay *in)
 		.len = sizeof(in->beatmap_hash),
 	};
 	if (binp_write_str(writer, &beatmap_hash) < 0) {
-		xerror_put(binp_error_msg(), binp_error_msg_len());
-		xerror_scat(":Could not write beatmap hash");
 		return -1;
 	}
 
 	if (binp_write_str(writer, &in->username) < 0) {
-		xerror_sput("Could not to write username");
 		return -1;
 	}
 
@@ -538,7 +499,6 @@ int osrp_write_osr(StreamWriter *writer, const OsuReplay *in)
 		.len = sizeof(in->md5hash),
 	};
 	if (binp_write_str(writer, &md5hash) < 0) {
-		xerror_sput("Could not write md5hash");
 		return -1;
 	}
 
@@ -588,17 +548,14 @@ int osrp_write_osr(StreamWriter *writer, const OsuReplay *in)
 		string_builder_init_cap(&byte_array, 1024 * 4);
 
 		if (elzma_compress_run(hand, compress_read, read_ctx, compress_write, &byte_array, NULL, NULL)) {
-			xerror_sput("Could not to compress replay frames");
 			free(byte_array.items);
 			free(replay_str.items);
 			elzma_compress_free(&hand);
-			return -EOSR_ENCODE_LZMA_FRAME_COMPRESS;
+			return -EOSR_DAMAGED_FILE;
 		}
 
 		ByteSlice byte_slice = string_builder_build(&byte_array);
 		if (binp_write_byte_array(writer, &byte_slice) < 0) {
-			xerror_put(binp_error_msg(), binp_error_msg_len());
-			xerror_scat(":Could not write byte array");
 			free(byte_array.items);
 			free(replay_str.items);
 			elzma_compress_free(&hand);
@@ -613,17 +570,14 @@ int osrp_write_osr(StreamWriter *writer, const OsuReplay *in)
 	if (in->version >= 20140721) {
 		ret = binp_write_i64(writer, in->online_id);
 		if (ret < 0) {
-			xerror_sput("Could not write online id");
 			return -1;
 		}
 	} else if (in->version >= 20121008) {
 		ret = binp_write_i32(writer, (int32_t) in->online_id);
 		if (ret < 0) {
-			xerror_sput("Could not write online id");
 			return -1;
 		}
 	} else {
-		xerror_sput("Unimplmented non-legacy replay parsing");
 		return -1;
 	}
 
@@ -646,7 +600,6 @@ int osrp_replay_frame_csv(StreamWriter *writer, const OsuReplay *replay, bool he
 		);
 		assert(fmt_size < 1024);
 		if (writer->write_n(writer->ctx, fmt_size, buf) != 0) {
-			xerror_sput("Write failed");
 			return -1;
 		}
 	}
@@ -659,7 +612,6 @@ int osrp_replay_frame_csv(StreamWriter *writer, const OsuReplay *replay, bool he
 		);
 		assert(fmt_size < 1024);
 		if (writer->write_n(writer->ctx, fmt_size, buf) != 0) {
-			xerror_sput("Write failed");
 			return -1;
 		}
 	}
